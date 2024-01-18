@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Network Speed Meter</title>
+  <style>
+    #speed-meter {
+      font-size: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div id="speed-meter">
+    <div id="download-speed">Download: 0 KB/s</div>
+    <div id="upload-speed">Upload: 0 KB/s</div>
+  </div>
+  <div id="real-network-speed"></div>
+  <div id="total-usage"></div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const downloadSpeedElement = document.getElementById('download-speed');
+      const uploadSpeedElement = document.getElementById('upload-speed');
+      const realNetworkSpeedElement = document.getElementById('real-network-speed');
+      const totalUsageElement = document.getElementById('total-usage');
+
+      let lastDownloadBytes = 0;
+      let lastUploadBytes = 0;
+      let totalNetworkBytes = 0;
+      let lastTimestamp = performance.now();
+
+      function updateSpeed() {
+        const currentTimestamp = performance.now();
+        const timeElapsed = (currentTimestamp - lastTimestamp) / 1000; // Convert to seconds
+
+        // Simulated download and upload bytes received
+        const currentDownloadBytes = Math.random() * 1000000; // Simulated download bytes
+        const currentUploadBytes = Math.random() * 500000; // Simulated upload bytes
+
+        // Calculate download and upload speeds in KB/s
+        const downloadSpeed = ((currentDownloadBytes - lastDownloadBytes) / 1024 / timeElapsed).toFixed(2);
+        const uploadSpeed = ((currentUploadBytes - lastUploadBytes) / 1024 / timeElapsed).toFixed(2);
+
+        // Update total network bytes
+        totalNetworkBytes += (currentDownloadBytes - lastDownloadBytes) + (currentUploadBytes - lastUploadBytes);
+
+        // Convert total network bytes to megabytes
+        const totalNetworkMB = (totalNetworkBytes / (1024 * 1024)).toFixed(2); // Convert to MB
+
+        // Update UI with download and upload speeds
+        downloadSpeedElement.textContent = `Download: ${downloadSpeed} KB/s`;
+        uploadSpeedElement.textContent = `Upload: ${uploadSpeed} KB/s`;
+
+        // Update last values and timestamp for next calculation
+        lastDownloadBytes = currentDownloadBytes;
+        lastUploadBytes = currentUploadBytes;
+        lastTimestamp = currentTimestamp;
+
+        // Check if the browser supports the Network Information API
+        if ('connection' in navigator && 'downlink' in navigator.connection) {
+          const { downlink, effectiveType } = navigator.connection;
+          realNetworkSpeedElement.textContent = `Effective Network Type: ${effectiveType}, Downlink: ${downlink} Mbps`;
+        } else {
+          realNetworkSpeedElement.textContent = 'Network Information API not supported';
+        }
+
+        // Update total network usage display in MB
+        totalUsageElement.textContent = `Total Network Usage: ${totalNetworkMB} MB`;
+
+        // Show notification for total network usage
+        if (Notification.permission === 'granted') {
+          const notification = new Notification('Total Network Usage', {
+            body: `Total Network Usage: ${totalNetworkMB} MB`,
+            icon: 'notification-icon.png' // Replace with your notification icon URL
+          });
+        } else if (Notification.permission !== 'denied') {
+          Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+              const notification = new Notification('Total Network Usage', {
+                body: `Total Network Usage: ${totalNetworkMB} MB`,
+                icon: 'notification-icon.png' // Replace with your notification icon URL
+              });
+            }
+          });
+        }
+      }
+
+      setInterval(updateSpeed, 1000); // Update speed every second
+    });
+  </script>
+</body>
+</html>
